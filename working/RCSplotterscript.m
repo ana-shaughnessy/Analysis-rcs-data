@@ -3,11 +3,11 @@
 
 clear
 
-PATIENTIDside =  'RCS02R'
+PATIENTIDside =  'RCS05L'
 % 'RCS02R'
 % 'CPRCS01';
-rootdir = '/Volumes/PrasadX5/' ;
-github_dir = '/Users/pshirvalkar/Documents/GitHub/UCSF-rcs-data-analysis';
+rootdir = '/Users/anashaughnessy/Desktop/' ;
+github_dir = '/Users/anashaughnessy/Documents/GitHub/Analysis-rcs-data';
 patientrootdir = fullfile(rootdir,char(regexp(PATIENTIDside,'\w*\d\d','match'))); %match the PATIENTID up to 2 digits: ie RCS02
 
 cd(github_dir)
