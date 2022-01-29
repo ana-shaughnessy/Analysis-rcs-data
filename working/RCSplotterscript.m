@@ -32,7 +32,11 @@ D(end-50:end,:)
 % load subsessions as these are all loaded automatically. 
 
 % recs_to_load =   D.rec(end-60:end-30)
+<<<<<<< Updated upstream
 recs_to_load =  [928];
+=======
+recs_to_load =  [679];
+>>>>>>> Stashed changes
 %%%%%%%%%%%%%%
 
 rc = rcsPlotter();
