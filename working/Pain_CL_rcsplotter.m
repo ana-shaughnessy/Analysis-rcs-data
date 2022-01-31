@@ -1,9 +1,14 @@
-% RCS plotter script
-%  Some usage examples:
+%Pain  CL optimizer using RCSplotter
+% This will make databases and then help to visualize data and combine it
+% to analyze the power bands/ FFT bands of interest.
+%
+%
 
 clear
+clc
 
-PATIENTIDside =  'RCS05L'
+PATIENTIDside =  ['RCS02R']
+
 % 'RCS02R'
 % 'CPRCS01';
 rootdir = '/Users/anashaughnessy/Desktop/' ;
@@ -14,71 +19,74 @@ cd(github_dir)
 addpath(genpath(github_dir))
 
 %% make database of all files
-[RCSdatabase_out,badsessions] = makeDataBaseRCSdata(patientrootdir,PATIENTIDside); % add AdaptiveData.Ld0_output
+[RCSdatabase_out,badsessions] = makeDataBaseRCSdata(patientrootdir,PATIENTIDside,1); % add AdaptiveData.Ld0_output
 
 %%  LOAD Database
 load(fullfile(patientrootdir,[PATIENTIDside '_database.mat']))
-D = RCSdatabase_out; 
+
 
 % Plot the 50 most recent subsessions
-D(end-50:end,:) 
+RCSdatabase_out(end-100:end,:)
 
 
 %%  LOAD ABOVE FILES AND PLOT CHANNELS OF INTEREST
 % close all
 
 %%%%%%%%%%%%%%
-% *** NOTE - only load integer sessions, such as 123, 124, etc.  no need to
-% load subsessions as these are all loaded automatically. 
+% *** NOTE - only load INTEGER sessions, such as 201, 202, 207, etc.  no need to
+% load subsessions (e.g. 201.2) as these are all loaded automatically.
 
 % recs_to_load =   D.rec(end-60:end-30)
-<<<<<<< Updated upstream
-recs_to_load =  [928];
-=======
-recs_to_load =  [679];
->>>>>>> Stashed changes
+
+recs_to_load =  [928]
+
 %%%%%%%%%%%%%%
 
 rc = rcsPlotter();
 
 for d = 1:numel(recs_to_load)  %find the row indices corresponding to rec#
-    d_idx =  find(D.rec == recs_to_load(d));
-    diruse = [D.path{d_idx}];
+    d_idx =  find(RCSdatabase_out.rec == recs_to_load(d));
+    diruse = [RCSdatabase_out.path{d_idx}];
     if ~isempty(diruse)
-    rc.addFolder(diruse);
+        rc.addFolder(diruse);
     end
 end
 rc.loadData()
 
-% report out the channel names  / locations etc. 
+% report out the channel names  / locations etc.
 
 rc.reportStimSettings
 rc.reportPowerBands
 rc.reportDataQualityAndGaps(1)
 %% SET your feature and stim channels
-
-pwr_to_time_ch_idx = [1,1,2,2,3,3,4,4];
-
 % ========Change below =======
-pd.feature =5;
+pd.feature = 5;
 pd.stim = 4;
 
-% RCS02L- feat = 5, stim =4;
-% ============================ 
+% RCS02R - feat/stim = 5/4  (ACC/Vp Thalamus)
+% RCS04L - 2/8
+% RCS04R -
+% RCS05L - 5/4  ACC/ LCaudate
+% RCS05R - 5/4 IFG/ Thal
+% ============================
 
+
+pwr_to_time_ch_idx = [1,1,2,2,3,3,4,4];
 td.feature = pwr_to_time_ch_idx(pd.feature);
 td.stim = pwr_to_time_ch_idx(pd.stim);
 
+fprintf('Feature = %s %s \nStim    = %s %s \n',rc.Data(1).timeDomainSettings.(['chan' num2str(td.feature)]){1}(1:5),...
+    rc.Data(1).powerSettings.powerBands(end).powerBandsInHz{pd.feature},...
+    rc.Data(1).timeDomainSettings.(['chan' num2str(td.stim)]){1}(1:5),...
+    rc.Data(1).powerSettings.powerBands(end).powerBandsInHz{pd.stim})
+%% - Plot time domain channels, spectrogram, LD, actigraphy etc. as you wish
 
 
-
-%% - Plot time domain channels, spectrogram, LD, 1 acteigraphy channel, etc
-% create figure
 close all
 hfig = figure('Color','w');
 hsb = gobjects();
 
-nplots = 4;
+nplots = 5;
 for i = 1:nplots; hsb(i,1) = subplot(nplots,1,i); end
 
 
@@ -86,16 +94,15 @@ for i = 1:nplots; hsb(i,1) = subplot(nplots,1,i); end
 rc.plotTdChannel(td.feature,hsb(1,1));
 rc.plotTdChannelSpectral(td.feature,hsb(2,1));
 rc.plotTdChannel(td.stim,hsb(3,1));
-rc.plotTdChannelSpectral(td.stim,hsb(4,1)); 
-
-
+rc.plotTdChannelSpectral(td.stim,hsb(4,1));
+rc.plotActigraphyRms(1,hsb(5,1));
 linkaxes(hsb,'x');
 
 %%            TD and Raw
 close all
 % create figure
 hfig = figure('Color','w');
-hsb = gobjects();
+hsb = gobjects()
 nplots = 10;
 for i = 1:nplots; hsb(i,1) = subplot(nplots,1,i); end
 
@@ -116,14 +123,13 @@ linkaxes(hsb,'x');
 %%             ADAPTIVE STATE
 % Assumes that programmed current amplitudes only occur in 0.5mA increments
 % (all else is ramping)
-% create figure
+
 hfig = figure('Color','w');
 hsb = gobjects();
 nplots = 3;
 for i = 1:nplots; hsb(i,1) = subplot(nplots,1,i); end
-
-rc.plotAdaptiveLd(0,hsb(1,1)); 
-    ylim([0 hsb(1,1).UserData.prctiles(end-2,2)]); %limit y axis to 90%ile
+rc.plotAdaptiveLd(0,hsb(1,1));
+ylim([0 hsb(1,1).UserData.prctiles(end-2,2)]); %limit y axis to 90%ile
 rc.plotAdaptiveState(0,hsb(2,1));
 rc.plotAdaptiveCurrent(0,hsb(3,1));
 
@@ -132,9 +138,6 @@ linkaxes(hsb,'x');
 
 %%  plot the distributions Ld0 state, separated by stim on/ off / ramp
 % USES actual STIM Current! (at present it assumes stim is in whole #s)
-
-% close all
-
 
 holdLD = []; holdcurrent = []; holdmA=[];
 holdfeatpwr = [];
@@ -152,43 +155,57 @@ for x = 1:numel(rc.Data)
         idxmA = find(contains(statefields,'AmpInMilliamps'));
         statecurrent = cell2mat(arrayfun(@(i) rc.Data(x).AdaptiveStimSettings.states.(statefields{i}),idxmA,'UniformOutput',false));
         statecurrent = statecurrent(:,1);
-        
+
         holdmA(:,x) =  statecurrent;
-       
-        
+
+
     end
 end
 
 statemA = (0:1:5);
-        % unique(holdmA);
+% unique(holdmA);
 idx_ld = ~isnan(holdLD);
 LDvals  = holdLD(idx_ld);
 featpwr = holdfeatpwr(idx_ld);
 stimpwr = holdstimpwr(idx_ld);
+
+if isempty(holdLD)
+    disp('    :(  no LD data!!!!! ')
+else
+
+
 currentvals = cell2mat(holdcurrent(idx_ld));
 currentvals  = currentvals(:,1); %only program 0
 
-%% Plot the distribution of LD0 values or power values as defined below
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%% change this to indicate LDvals or powervals to plot %%%%%%%%%%%
 plotvals = LDvals;
 % plotvals = featpwr;
 % plotvals = stimpwr;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+binlims = [0 200];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 
 figure
 % filter out stim data, and then include only stim data
 stimQ={'stimOFF','stimON','rampON'};
 idx=1;
+stim =[]; nostim=[]; ramp=[];
 for s=1:numel(stimQ)
     stimidx = currentvals >0 & ismember(currentvals,statemA); % if defined current value
     rampidx = ~(ismember(currentvals,statemA)); %if not defined current value (assumed 0mA is defined in a state)
     nostimidx = (currentvals == 0);
 
-    
+
     Ldplot = plotvals;
-    
+
     %create separate vars for stimOFF and stimON  and transition data
     if s==1
         Ldplot(~nostimidx)=nan; %only no stim data
@@ -201,27 +218,29 @@ for s=1:numel(stimQ)
         ramp = Ldplot;
     end
     ss(s) = subplot(3,1,idx); idx=idx+1;
-    h=histogram(ss(s),Ldplot,500,'BinLimits',[0 500], 'Normalization','count');
+    h=histogram(ss(s),Ldplot,200,'BinLimits',binlims, 'Normalization','count');
     hold on
     plot([nanmedian(Ldplot) nanmedian(Ldplot)],[0,max(h.Values)],'LineWidth',2,'LineStyle','--')   %plot the median value
-    
+
     xlabel('LD value')
-    
-    
+
+
     %      add useful stats
     statinfo = ["%ile","0","2.5","10","25","50","75","97.5"];
     statinfo2=  string(prctile(Ldplot,[0,2.5,10,25,50,75,97.5]));
-   
+
     %Fix this to plot on top of dashed lines
-    text(0.5,0.5,[statinfo],'Units','normalized');
-        text(0.55,0.5,[" ",statinfo2],'Units','normalized');
+    text(0.7,0.5,[statinfo],'Units','normalized','FontSize',16);
+    text(0.75,0.5,[" ",statinfo2],'Units','normalized','FontSize',16);
     titlestr=[stimQ{s}];
     title(titlestr);
-    
-    
+
+
 end
 set(gcf,'Position', [561 210 1016 739])
 % linkaxes(ss,'y')
+end
+
 
 
 
@@ -231,19 +250,20 @@ set(gcf,'Position', [561 210 1016 739])
 
 
 %%%%%%%%%%% CHANGE ME!%%%%%%%%%%%%%%%%
-Threshold = 15;
-num_bins = 100;
-plot_duration = 600; %(in seconds)
+Threshold = [rc.Data(1).DetectorSettings.Ld0.biasTerm(1)];
+Threshold = 100;
+num_bins = 50;
+plot_duration = 60; %(in seconds)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 % Ramp_duration =  enter ramp duration here and plot, so you know that
 % offset duration must be longer than this
-SampleRate = rc.Data.DetectorSettings.Ld0.updateRate; % LdA update rate multiple of FFT Fs
-usedata= rc.Data.combinedDataTable.Adaptive_Ld0_output ;
-pwrhold = usedata(~isnan(usedata));
+SampleRate = rc.Data(1).DetectorSettings.Ld0.updateRate; % LdA update rate multiple of FFT Fs
+usedata= rc.Data(1).combinedDataTable.Adaptive_Ld0_output ;
+ldhold = usedata(~isnan(usedata));
 
-close all
+% close all
 h=figure;
 
 
@@ -261,10 +281,10 @@ clear belowT aboveT samples_*
 % pwrhold(1:numel(pwrhold2)) = pwrhold2(:);
 
 %  find samples where pwr < threshold
-belowT = find(pwrhold < Threshold);
+belowT = find(ldhold < Threshold);
 
 % OFFSET duration where pwr > threshold
-aboveT = find(pwrhold > Threshold);
+aboveT = find(ldhold > Threshold);
 
 % how many samples until > threshold again?
 % what is this in time?
@@ -282,17 +302,21 @@ alltimes_belowT = [alltimes_belowT; timebelowT];
 
 %
 s1 = subplot(1,2,1);
-histogram(s1,alltimes_aboveT,num_bins,'BinLimits',[0 plot_duration],'Normalization','count');
-statinfo = {'LD'; ['Threshold = ' num2str(Threshold)]; ['median = ' num2str(nanmedian(alltimes_aboveT)) ' sec']; ['std = ' num2str(std(alltimes_aboveT))]};
-text(0.7,0.7,statinfo,'Units','normalized','FontSize',14);
+histogram(s1,alltimes_aboveT,num_bins,'BinLimits',[0 plot_duration],'Normalization','probability');
+prcnt = ["%ile  ","10%  ","25%  ","50%  ","75%  ";" ",string(prctile(alltimes_aboveT,[10,25,50,75]))];
+statinfo = ["LD"," "; "Threshold = ", num2str(Threshold)];
+prcnt_txt = cat(1,statinfo,prcnt');
+text(0.7,0.7,strcat(prcnt_txt(:,1),prcnt_txt(:,2)),'Units','normalized','FontSize',14);
 % ylabel('probability')
 xlabel('time (sec)')
 title({'ONSET duration';'Distribution of continuous time that LD > Threshold before dropping below'})
 
 s2 = subplot(1,2,2);
-histogram(s2,alltimes_belowT,num_bins,'BinLimits',[0 plot_duration],'Normalization','count');
-statinfo2 = {'LD'; ['Threshold = ' num2str(Threshold)]; ['median = ' num2str(nanmedian(alltimes_belowT)) ' sec']; ['std = ' num2str(std(alltimes_belowT))]};
-text(0.7,0.7,statinfo2,'Units','normalized','FontSize',14);
+histogram(s2,alltimes_belowT,num_bins,'BinLimits',[0 plot_duration],'Normalization','probability');
+prcnt2 = ["%ile  ","10%  ","25%  ","50%  ","75%  ";" ",string(prctile(alltimes_belowT,[10,25,50,75]))];
+statinfo2 = ["LD"," "; "Threshold = ", num2str(Threshold)];
+prcnt_txt = cat(1,statinfo2,prcnt2');
+text(0.7,0.7,strcat(prcnt_txt(:,1),prcnt_txt(:,2)),'Units','normalized','FontSize',14);
 % ylabel('probability')
 xlabel('time (sec)')
 title({'OFFSET duration';'Distribution of continuous time that LD < Threshold before rising above'})
@@ -309,7 +333,7 @@ h.Position =[1436 799 1361 368];
 figure
 
 for f = 1:length(fnames)
-    
+
     subplot(numf,1,f)
     scatter(nanmeanpwr{f},PWRmeta.pain)
     title([num2str(PWRmeta.ctrFq{f}) ' Hz:  ' PWRmeta.contacts{f}])
@@ -317,6 +341,3 @@ end
 
 xlabel('power')
 ylabel('pain')
-
-
-
