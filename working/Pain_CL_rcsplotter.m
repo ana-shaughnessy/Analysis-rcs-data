@@ -7,7 +7,7 @@
 clear
 clc
 
-PATIENTIDside =  ['RCS02R']
+PATIENTIDside =  ['RCS05L']
 
 % 'RCS02R'
 % 'CPRCS01';
@@ -38,7 +38,7 @@ RCSdatabase_out(end-100:end,:)
 
 % recs_to_load =   D.rec(end-60:end-30)
 
-recs_to_load =  [928]
+recs_to_load =  [106]
 
 %%%%%%%%%%%%%%
 
@@ -86,7 +86,7 @@ close all
 hfig = figure('Color','w');
 hsb = gobjects();
 
-nplots = 5;
+nplots = 8;
 for i = 1:nplots; hsb(i,1) = subplot(nplots,1,i); end
 
 
@@ -96,6 +96,9 @@ rc.plotTdChannelSpectral(td.feature,hsb(2,1));
 rc.plotTdChannel(td.stim,hsb(3,1));
 rc.plotTdChannelSpectral(td.stim,hsb(4,1));
 rc.plotActigraphyRms(1,hsb(5,1));
+rc.plotAdaptiveLd(1, hsb(6,1)); title('LD0'); ylim([0 1000])
+rc.plotAdaptiveState(0,hsb(7,1));
+rc.plotAdaptiveCurrent(0,hsb(8,1));
 linkaxes(hsb,'x');
 
 %%            TD and Raw

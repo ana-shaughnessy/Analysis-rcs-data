@@ -131,7 +131,7 @@ if isfile(outputFileName) && nargin<3
         return
     end
 
-elseif isfile(outputFileName) && nargin<3 && strcmp(varargin{1},'ignoreold')
+else 
     disp('Compiling database from scratch...')
     old_database= [];
 end
